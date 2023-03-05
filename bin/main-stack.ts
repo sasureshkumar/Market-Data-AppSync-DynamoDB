@@ -8,6 +8,8 @@ import {APIStack} from "../lib/api-stack";
 import {DataSourceStack} from "../lib/data-source-stack";
 import {DataSourceFunctionStack} from "../lib/data-source-function-stack";
 import {PipelineResolverStack} from "../lib/pipeline-resolver-stack";
+import {LambdaStack} from "../lib/lambda-stack";
+import {Effect} from "aws-cdk-lib/aws-iam";
 
 
 const stackPrefix = 'Deriv';
@@ -97,6 +99,37 @@ const tables = [
 ];
 const databaseStacks = {} as Record<string, DatabaseStack>;
 
+const lambdaFunctions = [
+    {
+        id: 'PublishTick',
+        handler: 'main',
+        entry: './lib/lambda/publisher/handler.ts',
+        statements: [
+            {
+                effect: Effect.ALLOW,
+                actions: [
+                    "dynamodb:GetShardIterator",
+                    "dynamodb:DescribeStream",
+                    "dynamodb:ListStreams",
+                    "dynamodb:GetRecords",
+                ],
+                resources: [
+                    '*',
+                ],
+            },
+            {
+                effect: Effect.ALLOW,
+                actions: [
+                    'appsync:GraphQL',
+                ],
+                resources: [
+                    '*',
+                ],
+            },
+        ],
+    },
+]
+
 const commonProps = {
     env: {
         region: primaryRegion,
@@ -150,5 +183,19 @@ for (const region of [primaryRegion, ...replicationRegions]) {
                 runtime: runtime,
             })
         }
+    }
+
+    for (const lambdaFunction of lambdaFunctions) {
+        new LambdaStack(app, stackPrefix + lambdaFunction.id + 'LambdaStack' + region, {
+            ...commonProps,
+            id: lambdaFunction.id,
+            handler: lambdaFunction.handler,
+            entry: lambdaFunction.entry,
+            environment: {
+                ENDPOINT: apiStack.api.graphqlUrl,
+                REGION: region,
+            },
+            statements: lambdaFunction.statements,
+        })
     }
 }
