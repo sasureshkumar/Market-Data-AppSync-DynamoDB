@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
-import {DatabaseStack} from "../lib/database-stack";
 import {AttributeType, ProjectionType} from "aws-cdk-lib/aws-dynamodb";
+import {DatabaseStack} from "../lib/database-stack";
+import {APIStack} from "../lib/api-stack";
+import {DataSourceStack} from "../lib/data-source-stack";
 
 
 const stackPrefix = 'Deriv';
@@ -29,6 +31,13 @@ const replicationRegions = [
 ];
 
 const tickTableName = stackPrefix + 'TickTable';
+const tables = [
+    {
+        id: tickTableName,
+        tableName: tickTableName,
+    }
+];
+const databaseStacks = {} as Record<string, DatabaseStack>;
 
 const commonProps = {
     env: {
@@ -36,15 +45,17 @@ const commonProps = {
     }
 }
 
-const databaseStack = new DatabaseStack(app, stackPrefix + 'DatabaseStack', {
-    ...commonProps,
-    id: tickTableName,
-    tableName: tickTableName,
-    partitionKey: 'id',
-    replicationRegions: replicationRegions,
-});
+for (const table of tables) {
+    databaseStacks[table.id] = new DatabaseStack(app, stackPrefix + 'DatabaseStack' + table.id, {
+        ...commonProps,
+        id: tickTableName,
+        tableName: tickTableName,
+        partitionKey: 'id',
+        replicationRegions: replicationRegions,
+    });
+}
 
-databaseStack.table.addGlobalSecondaryIndex(
+databaseStacks[tickTableName].table.addGlobalSecondaryIndex(
     {
         indexName: 'bySymbol',
         partitionKey: {
@@ -58,3 +69,20 @@ databaseStack.table.addGlobalSecondaryIndex(
         projectionType: ProjectionType.ALL,
     }
 )
+
+for (const region of [primaryRegion, ...replicationRegions]) {
+    commonProps.env.region = region;
+    const apiStack = new APIStack(app, stackPrefix + 'APIStack' + region, {
+        apiName: stackPrefix + 'API',
+        ...commonProps,
+    });
+    const dataSourceStacks = {} as Record<string, DataSourceStack>;
+    for (const table of tables) {
+        dataSourceStacks[table.id] = new DataSourceStack(app, stackPrefix + 'DataSourceStack' + table.id + region, {
+            ...commonProps,
+            id: table.id,
+            tableName: table.tableName,
+            api: apiStack.api,
+        })
+    }
+}

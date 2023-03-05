@@ -1,0 +1,58 @@
+type Mutation {
+    createTick(
+        id: ID!,
+        symbol: String!,
+        epoch: Int!,
+        ask: Float!,
+        bid: Float!,
+        quote: Float!,
+        pip_size: Int!
+    ): Tick!
+    @aws_iam
+    publishTick(
+        id: ID!,
+        symbol: String!,
+        epoch: Int!,
+        ask: Float!,
+        bid: Float!,
+        quote: Float!,
+        pip_size: Int!
+    ): Tick!
+    @aws_iam
+}
+
+type PaginatedTicks {
+    ticks: [Tick!]!
+    nextToken: String
+}
+
+type Query {
+    getTick(id: ID!): Tick
+    @aws_iam
+    listTicks(limit: Int, nextToken: String): PaginatedTicks!
+    @aws_iam
+    listTicksBySymbol(symbol: String!, limit: Int, nextToken: String): PaginatedTicks!
+    @aws_iam
+}
+
+type Subscription {
+    onCreateTick(symbol: String): Tick
+    @aws_subscribe(mutations: ["publishTick"])
+    @aws_iam
+}
+
+type Tick {
+    id: ID!
+    symbol: String!
+    epoch: Int!
+    ask: Float!
+    bid: Float!
+    quote: Float!
+    pip_size: Int!
+}
+
+schema {
+    query: Query
+    mutation: Mutation
+    subscription: Subscription
+}
