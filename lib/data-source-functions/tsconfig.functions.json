@@ -1,0 +1,20 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "moduleResolution": "node",
+    "target": "ES2020",
+    "module": "ES2020",
+    "strict": true,
+    "noImplicitAny": true,
+    "outDir": "./",
+    "declaration": true,
+    "declarationDir": "./types",
+    "removeComments": true,
+    "noImplicitUseStrict": false,
+    "esModuleInterop": true,
+    "sourceMap": false
+  },
+  "include": [
+    "./*"
+  ]
+}

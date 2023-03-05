@@ -1,12 +1,21 @@
 import {RemovalPolicy, Stack, StackProps} from "aws-cdk-lib";
-import {AttributeType, BillingMode, StreamViewType, Table} from "aws-cdk-lib/aws-dynamodb";
+import {AttributeType, BillingMode, StreamViewType, Table, TableProps} from "aws-cdk-lib/aws-dynamodb";
 import {Construct} from "constructs";
+import {GlobalSecondaryIndexProps} from "aws-cdk-lib/aws-dynamodb/lib/table";
 
 interface DatabaseStackProps extends StackProps {
     id: string;
     tableName: string;
-    partitionKey: string;
-    replicationRegions: string[]
+    partitionKey: {
+        name: string;
+        type: AttributeType;
+    };
+    sortKey?: {
+        name: string;
+        type: AttributeType;
+    }
+    replicationRegions?: string[]
+    globalSecondaryIndices?: GlobalSecondaryIndexProps[]
 }
 
 export class DatabaseStack extends Stack {
@@ -16,17 +25,19 @@ export class DatabaseStack extends Stack {
         super(scope, id, props);
 
         this.table = new Table(this, props.id, {
-            tableName: props.tableName,
-            partitionKey: {
-                name: props.partitionKey,
-                type: AttributeType.STRING,
-            },
             stream: StreamViewType.NEW_AND_OLD_IMAGES,
             billingMode: BillingMode.PAY_PER_REQUEST,
-            replicationRegions: props.replicationRegions,
             removalPolicy: RemovalPolicy.DESTROY,
             pointInTimeRecovery: true,
             timeToLiveAttribute: 'TTL',
+            partitionKey: props.partitionKey,
+            sortKey: props.sortKey,
+            replicationRegions: props.replicationRegions
         });
+        if (props.globalSecondaryIndices) {
+            for (const index of props.globalSecondaryIndices) {
+                this.table.addGlobalSecondaryIndex(index)
+            }
+        }
     }
 }
