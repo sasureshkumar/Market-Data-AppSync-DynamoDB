@@ -8,7 +8,7 @@ export const publish = async (data: { ask: any; bid: any; epoch: any; id: any; p
     const region = process.env.REGION as string;
     const endpoint = new URL(process.env.ENDPOINT as string);
     const mutation = /* GraphQL */`
-        mutation MyMutation($ask: Float!, $bid: Float!, $epoch: Int!, $id: ID!, $pip_size: Int!, $quote: Float!, $symbol: String!) {
+        mutation MyMutation($ask: Float!, $bid: Float!, $epoch: AWSTimestamp!, $id: ID!, $pip_size: Int!, $quote: Float!, $symbol: String!) {
             publishTick(ask: $ask, bid: $bid, epoch: $epoch, id: $id, pip_size: $pip_size, quote: $quote, symbol: $symbol) {
                 ask
                 bid
@@ -33,7 +33,7 @@ export const publish = async (data: { ask: any; bid: any; epoch: any; id: any; p
         variables: {
             ask: data.ask,
             bid: data.bid,
-            epoch: data.epoch,
+            epoch: 1,
             id: data.id,
             pip_size: data.pip_size,
             quote: data.quote,

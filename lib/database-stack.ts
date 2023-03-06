@@ -25,6 +25,7 @@ export class DatabaseStack extends Stack {
         super(scope, id, props);
 
         this.table = new Table(this, props.id, {
+            tableName: props.tableName,
             stream: StreamViewType.NEW_AND_OLD_IMAGES,
             billingMode: BillingMode.PAY_PER_REQUEST,
             removalPolicy: RemovalPolicy.DESTROY,

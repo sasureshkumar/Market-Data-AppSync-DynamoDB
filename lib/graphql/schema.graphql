@@ -1,8 +1,8 @@
 type Mutation {
     createTick(
-        id: ID!,
+        id: ID,
         symbol: String!,
-        epoch: Int!,
+        epoch: AWSTimestamp,
         ask: Float!,
         bid: Float!,
         quote: Float!,
@@ -12,7 +12,7 @@ type Mutation {
     publishTick(
         id: ID!,
         symbol: String!,
-        epoch: Int!,
+        epoch: AWSTimestamp!,
         ask: Float!,
         bid: Float!,
         quote: Float!,
@@ -44,7 +44,7 @@ type Subscription {
 type Tick {
     id: ID!
     symbol: String!
-    epoch: Int!
+    epoch: AWSTimestamp!
     ask: Float!
     bid: Float!
     quote: Float!
